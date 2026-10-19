@@ -1,0 +1,15 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: port-service
+  datasource:
+    url: jdbc:postgresql://localhost:5433/portdb
+    username: port
+    password: port123
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: true
