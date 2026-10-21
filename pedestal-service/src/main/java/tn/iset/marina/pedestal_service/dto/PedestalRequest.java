@@ -1,0 +1,16 @@
+package tn.iset.marina.pedestal_service.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import tn.iset.marina.pedestal_service.entity.PedestalStatus;
+
+public record PedestalRequest(
+        @NotBlank @Size(max = 50) String serialNumber,
+        @NotBlank @Size(max = 100) String name,
+        @NotNull @Positive Long portId,
+        @NotBlank @Size(max = 50) String pontoon,
+        @NotNull PedestalStatus status
+) {
+}

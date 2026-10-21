@@ -1,0 +1,4 @@
+package tn.iset.marina.pedestal_service.dto;
+
+public record PortResponse(Long id, String name, String city, String country, Integer capacity) {
+}

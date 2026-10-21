@@ -1,0 +1,183 @@
+{
+  "info": {
+    "_postman_id": "fa8124ef-25b5-4c98-8c8e-a1a36ee96d2c",
+    "name": "XYZ Smart Marina Pedestal",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "pedestalId",
+      "value": "1"
+    },
+    {
+      "key": "portId",
+      "value": "3"
+    }
+  ],
+  "item": [
+    {
+      "name": "POST Créer une borne",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serialNumber\": \"XYZ-PED-001\",\n  \"name\": \"Borne Ponton A1\",\n  \"portId\": {{portId}},\n  \"pontoon\": \"A\",\n  \"status\": \"ACTIVE\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "http://localhost:8082/api/pedestals"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    pm.collectionVariables.set('pedestalId', pm.response.json().id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "GET Lister avec filtres",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:8082/api/pedestals?page=0&size=20&sort=id,asc&portId={{portId}}&status=ACTIVE"
+      },
+      "response": []
+    },
+    {
+      "name": "GET Consulter une borne",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:8082/api/pedestals/{{pedestalId}}"
+      },
+      "response": []
+    },
+    {
+      "name": "PUT Passer en maintenance",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serialNumber\": \"XYZ-PED-001\",\n  \"name\": \"Borne Ponton A1\",\n  \"portId\": {{portId}},\n  \"pontoon\": \"A\",\n  \"status\": \"MAINTENANCE\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "http://localhost:8082/api/pedestals/{{pedestalId}}"
+      },
+      "response": []
+    },
+    {
+      "name": "POST Doublon (409)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serialNumber\": \"XYZ-PED-001\",\n  \"name\": \"Borne Ponton A1\",\n  \"portId\": {{portId}},\n  \"pontoon\": \"A\",\n  \"status\": \"ACTIVE\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "http://localhost:8082/api/pedestals"
+      },
+      "response": []
+    },
+    {
+      "name": "POST Port inexistant (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serialNumber\": \"XYZ-PED-UNKNOWN-001\",\n  \"name\": \"Borne de test\",\n  \"portId\": 999999,\n  \"pontoon\": \"A\",\n  \"status\": \"ACTIVE\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "http://localhost:8082/api/pedestals"
+      },
+      "response": []
+    },
+    {
+      "name": "POST Validation invalide (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serialNumber\": \"\",\n  \"name\": \"\",\n  \"portId\": 0,\n  \"pontoon\": \"\",\n  \"status\": \"INVALID\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "http://localhost:8082/api/pedestals"
+      },
+      "response": []
+    },
+    {
+      "name": "GET Borne inconnue (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:8082/api/pedestals/999999"
+      },
+      "response": []
+    },
+    {
+      "name": "DELETE Supprimer une borne",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "http://localhost:8082/api/pedestals/{{pedestalId}}"
+      },
+      "response": []
+    }
+  ]
+}
