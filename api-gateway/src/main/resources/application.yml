@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Valeur "iss" des jetons (adresse publique de Keycloak)
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/smart-marina}
+          # Adresse utilisée par la Gateway pour récupérer les clés publiques
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/smart-marina/protocol/openid-connect/certs}
+
+services:
+  port-service: ${PORT_SERVICE_URL:http://localhost:8081}
+  pedestal-service: ${PEDESTAL_SERVICE_URL:http://localhost:8082}
+  consumption-service: ${CONSUMPTION_SERVICE_URL:http://localhost:8083}
+  notification-service: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+
+smart-marina:
+  security:
+    enabled: ${SECURITY_ENABLED:true}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200,http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
