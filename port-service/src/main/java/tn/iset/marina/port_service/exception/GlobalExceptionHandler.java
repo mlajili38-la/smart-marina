@@ -25,6 +25,17 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage(), request, List.of());
     }
 
+    @ExceptionHandler(PortInUseException.class)
+    public ResponseEntity<ErrorResponse> handleInUse(PortInUseException exception, HttpServletRequest request) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), request, List.of());
+    }
+
+    @ExceptionHandler(PedestalServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleUnavailable(
+            PedestalServiceUnavailableException exception, HttpServletRequest request) {
+        return error(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), request, List.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException exception, HttpServletRequest request) {

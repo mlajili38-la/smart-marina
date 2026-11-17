@@ -3,9 +3,11 @@ package tn.iset.marina.port_service.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tn.iset.marina.port_service.client.PedestalClient;
 import tn.iset.marina.port_service.dto.PortRequest;
 import tn.iset.marina.port_service.dto.PortResponse;
 import tn.iset.marina.port_service.entity.Port;
+import tn.iset.marina.port_service.exception.PortInUseException;
 import tn.iset.marina.port_service.exception.PortNotFoundException;
 import tn.iset.marina.port_service.repository.PortRepository;
 
@@ -16,6 +18,7 @@ import java.util.List;
 public class PortService {
 
     private final PortRepository repository;
+    private final PedestalClient pedestalClient;
 
     @Transactional(readOnly = true)
     public List<PortResponse> findAll() {
@@ -43,7 +46,13 @@ public class PortService {
 
     @Transactional
     public void delete(Long id) {
-        repository.delete(getOrThrow(id));
+        Port port = getOrThrow(id);
+        // Un port qui a encore des bornes ne peut pas être supprimé : elles pointeraient vers un port inexistant
+        long pedestals = pedestalClient.countByPort(id);
+        if (pedestals > 0) {
+            throw new PortInUseException(id, pedestals);
+        }
+        repository.delete(port);
     }
 
     private Port getOrThrow(Long id) {

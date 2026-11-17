@@ -144,6 +144,7 @@ services:
     container_name: port-service
     environment:
       DB_URL: jdbc:postgresql://postgres-port:5432/portdb
+      PEDESTAL_SERVICE_URL: http://pedestal-service:8082
       SHOW_SQL: "false"
     depends_on:
       postgres-port:

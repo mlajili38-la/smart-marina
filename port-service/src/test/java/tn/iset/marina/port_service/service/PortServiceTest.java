@@ -5,7 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tn.iset.marina.port_service.client.PedestalClient;
 import tn.iset.marina.port_service.dto.PortRequest;
+import tn.iset.marina.port_service.exception.PedestalServiceUnavailableException;
+import tn.iset.marina.port_service.exception.PortInUseException;
 import tn.iset.marina.port_service.entity.Port;
 import tn.iset.marina.port_service.exception.PortNotFoundException;
 import tn.iset.marina.port_service.repository.PortRepository;
@@ -25,11 +28,44 @@ class PortServiceTest {
     @Mock
     private PortRepository repository;
 
+    @Mock
+    private PedestalClient pedestalClient;
+
     private PortService service;
 
     @BeforeEach
     void setUp() {
-        service = new PortService(repository);
+        service = new PortService(repository, pedestalClient);
+    }
+
+    @Test
+    void deleteRemovesPortWithoutPedestals() {
+        Port port = new Port(1L, "Marina Mahdia", "Mahdia", "Tunisie", 200);
+        when(repository.findById(1L)).thenReturn(Optional.of(port));
+        when(pedestalClient.countByPort(1L)).thenReturn(0L);
+
+        service.delete(1L);
+
+        verify(repository).delete(port);
+    }
+
+    @Test
+    void deleteRefusesPortWithPedestals() {
+        when(repository.findById(1L)).thenReturn(Optional.of(new Port(1L, "Marina Mahdia", null, null, null)));
+        when(pedestalClient.countByPort(1L)).thenReturn(3L);
+
+        PortInUseException exception = assertThrows(PortInUseException.class, () -> service.delete(1L));
+        assertEquals("Suppression impossible : le port 1 possède encore 3 borne(s)", exception.getMessage());
+        verify(repository, never()).delete(any());
+    }
+
+    @Test
+    void deleteReportsUnavailablePedestalService() {
+        when(repository.findById(1L)).thenReturn(Optional.of(new Port(1L, "Marina Mahdia", null, null, null)));
+        when(pedestalClient.countByPort(1L)).thenThrow(new PedestalServiceUnavailableException());
+
+        assertThrows(PedestalServiceUnavailableException.class, () -> service.delete(1L));
+        verify(repository, never()).delete(any());
     }
 
     @Test

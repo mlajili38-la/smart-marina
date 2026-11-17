@@ -118,6 +118,39 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "DELETE Port qui a des bornes (409)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "description": "Créer d'abord une borne sur ce port (pedestal-service sur le port 8082 doit tourner). Réponse attendue : 409. Si pedestal-service est arrêté : 503.",
+        "url": {
+          "raw": "http://localhost:8081/api/ports/2",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "ports",
+            "2"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 409', () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "response": []
     }
   ]
 }

@@ -532,6 +532,25 @@
           ]
         },
         {
+          "name": "DELETE Port qui a des bornes (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{gateway}}/api/ports/{{portId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "GET Sans jeton (401)",
           "request": {
             "method": "GET",

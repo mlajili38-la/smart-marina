@@ -7,6 +7,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tn.iset.marina.port_service.dto.PortResponse;
+import tn.iset.marina.port_service.exception.PedestalServiceUnavailableException;
+import tn.iset.marina.port_service.exception.PortInUseException;
 import tn.iset.marina.port_service.exception.PortNotFoundException;
 import tn.iset.marina.port_service.service.PortService;
 
@@ -81,6 +83,23 @@ class PortControllerTest {
 
         mockMvc.perform(delete("/api/ports/5"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deletePortWithPedestalsReturnsConflict() throws Exception {
+        doThrow(new PortInUseException(1L, 3)).when(service).delete(1L);
+
+        mockMvc.perform(delete("/api/ports/1"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Suppression impossible : le port 1 possède encore 3 borne(s)"));
+    }
+
+    @Test
+    void deleteReturnsServiceUnavailableWhenPedestalServiceIsDown() throws Exception {
+        doThrow(new PedestalServiceUnavailableException()).when(service).delete(1L);
+
+        mockMvc.perform(delete("/api/ports/1"))
+                .andExpect(status().isServiceUnavailable());
     }
 
     private PortResponse port(Long id) {

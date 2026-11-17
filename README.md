@@ -15,7 +15,7 @@ Plateforme microservices de gestion des ports de plaisance de XYZ : ports, borne
      ┌───────────────┬───┴──────────────┬─────────────────────┐
      ▼               ▼                  ▼                     ▼
  port-service   pedestal-service   consumption-service   notification-service
-   :8081    ◄──REST── :8082 ◄──REST──►   :8083                 :8084
+   :8081    ◄──REST──► :8082 ◄──REST──►  :8083                 :8084
      │               │                  │   │ publie             ▲ consomme
   portdb         pedestaldb      consumptiondb  └──► Kafka ──────┘ notificationdb
                                          topic "consumption-recorded"
@@ -101,6 +101,12 @@ La documentation Swagger UI de chaque service est disponible sur `http://localho
 
 `GET` (liste), `GET /{id}`, `POST`, `PUT /{id}`, `DELETE /{id}`. Corps : `{"name": "Marina Mahdia", "city": "Mahdia", "country": "Tunisie", "capacity": 250}`.
 
+Codes d'erreur :
+- `400` : validation ;
+- `404` : port absent ;
+- `409` : suppression d'un port qui possède encore des bornes ;
+- `503` : `pedestal-service` indisponible au moment de la suppression.
+
 ### pedestal-service - `/api/pedestals`
 
 | Méthode | Route | Description |
@@ -169,3 +175,7 @@ Spring Boot Actuator est actif sur chaque service : `/actuator/health` (avec les
 
 - **RG-08** : une borne qui a déjà des consommations ne peut pas être supprimée, car l'historique doit être conservé. `pedestal-service` interroge `consumption-service` avant de supprimer.
 - **RG-09** : un gestionnaire de port ne gère que les bornes, les consommations et les notifications de son port. Il ne peut pas déplacer une borne vers un autre port.
+- **Suppression d'un port** : un port qui possède encore des bornes ne peut pas être supprimé (`409`), sinon ces bornes pointeraient vers un port inexistant.
+  - `port-service` interroge `pedestal-service` (`GET /api/pedestals?portId={id}&size=1`, lecture de `totalElements`).
+  - L'appel a un délai de connexion de 2 s et de lecture de 3 s.
+  - Si `pedestal-service` est indisponible, la réponse est `503` et la suppression est refusée par prudence.
