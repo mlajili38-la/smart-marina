@@ -1,0 +1,46 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: consumption-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5435/consumptiondb}
+    username: ${DB_USERNAME:consumption}
+    password: ${DB_PASSWORD:consumption123}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: ${SHOW_SQL:true}
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      acks: all
+      properties:
+        # Pas d'en-tête de type Java : le consommateur choisit sa propre classe (découplage)
+        spring.json.add.type.headers: false
+
+pedestal-service:
+  base-url: ${PEDESTAL_SERVICE_URL:http://localhost:8082}
+
+smart-marina:
+  kafka:
+    topics:
+      consumption-recorded: consumption-recorded
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
