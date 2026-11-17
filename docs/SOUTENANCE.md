@@ -65,3 +65,19 @@ Dans le projet :
 5. **Validation des entrées** avec Bean Validation, erreurs uniformes sans trace technique, sessions sans état et CSRF désactivé (API sans cookie).
 
 En production, il faudrait ajouter HTTPS, des secrets hors du code (variables d'environnement ou coffre-fort), du *rate limiting*, et une authentification entre services (mTLS ou jetons *client credentials*).
+
+## Limites connues
+
+- **Confiance dans les en-têtes `X-User-*`.** Les microservices lisent l'identité dans les en-têtes posés par la Gateway et ne revérifient pas le jeton JWT. C'est sûr **uniquement dans Docker**, où les services ne publient aucun port vers l'hôte et ne sont joignables que par la Gateway.
+  - Quand on lance les services depuis l'IDE, on peut appeler un service directement (`localhost:8082`) et forger ces en-têtes.
+  - Amélioration possible : chaque service valide lui-même le JWT (resource server), ou mTLS entre services.
+- **Docker et Keycloak écrits mais pas encore testés.** Les Dockerfiles, le `docker-compose.yml` et le realm Keycloak n'ont pas pu être exécutés : Docker n'était pas installé sur le poste de développement. Les 73 tests automatisés tournent sans Docker (Mockito, MockMvc, H2, Kafka embarqué) et couvrent le code Java, y compris le flux Kafka réel. Il reste à vérifier :
+  - la construction des images ;
+  - l'import du realm, en particulier la claim `port_id` ;
+  - l'acceptation par la Gateway des jetons émis par Keycloak.
+- **Plan B pour la démonstration.** Si Keycloak ne démarre pas ou si les jetons sont refusés, lancer la Gateway avec `SECURITY_ENABLED=false`.
+  - Le routage, les services, Kafka et les règles métier restent démontrables.
+  - Les règles d'accès par rôle et RG-09 ne s'appliquent plus, car aucune identité n'est transmise.
+  - On peut alors montrer RG-09 en appelant directement un service avec les en-têtes `X-User-Roles: PORT_MANAGER` et `X-User-Port-Id: 1`.
+- **Cohérence entre services.** Les vérifications croisées (port qui a des bornes, borne qui a des consommations) se font par REST au moment de la suppression. Ce n'est pas une transaction distribuée : une borne créée exactement pendant la suppression du port pourrait passer. C'est acceptable à cette échelle, et l'alternative serait un mécanisme de saga.
+- **Dépendance circulaire REST.** `port-service` et `pedestal-service` s'appellent l'un l'autre, de même que `pedestal-service` et `consumption-service`. Si l'un est arrêté, certaines opérations de l'autre renvoient `503`, mais aucun service ne plante.
