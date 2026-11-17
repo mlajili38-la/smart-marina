@@ -5,14 +5,31 @@ spring:
   application:
     name: pedestal-service
   datasource:
-    url: jdbc:postgresql://localhost:5434/pedestaldb
-    username: pedestal
-    password: pedestal123
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/pedestaldb}
+    username: ${DB_USERNAME:pedestal}
+    password: ${DB_PASSWORD:pedestal123}
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: ${SHOW_SQL:true}
+  data:
+    web:
+      pageable:
+        max-page-size: 100
 
 port-service:
-  base-url: http://localhost:8081
+  base-url: ${PORT_SERVICE_URL:http://localhost:8081}
+
+consumption-service:
+  base-url: ${CONSUMPTION_SERVICE_URL:http://localhost:8083}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

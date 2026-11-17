@@ -1,9 +1,11 @@
 package tn.iset.marina.pedestal_service.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -19,6 +22,7 @@ import tn.iset.marina.pedestal_service.dto.PedestalPageResponse;
 import tn.iset.marina.pedestal_service.dto.PedestalRequest;
 import tn.iset.marina.pedestal_service.dto.PedestalResponse;
 import tn.iset.marina.pedestal_service.entity.PedestalStatus;
+import tn.iset.marina.pedestal_service.security.CurrentUser;
 import tn.iset.marina.pedestal_service.service.PedestalService;
 
 @RestController
@@ -29,18 +33,13 @@ public class PedestalController {
     private final PedestalService service;
 
     @GetMapping
-    @Operation(summary = "Lister les bornes avec pagination, tri et filtres")
+    @Operation(summary = "Lister les bornes avec pagination, tri (sort=champ,asc|desc) et filtres")
     public PedestalPageResponse getAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction,
+            @PageableDefault(size = 20, sort = "id") @Parameter(hidden = true) Pageable pageable,
             @RequestParam(required = false) Long portId,
             @RequestParam(required = false) PedestalStatus status
     ) {
-        // Le champ et la direction sont deux paramètres distincts : pas d'ambiguïté sur la virgule
-        Sort sorting = Sort.by(Sort.Direction.fromString(direction), sortBy);
-        return service.findAll(page, size, sorting, portId, status);
+        return service.findAll(pageable, portId, status);
     }
 
     @GetMapping("/{id}")
@@ -52,20 +51,29 @@ public class PedestalController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Créer une borne")
-    public PedestalResponse create(@Valid @RequestBody PedestalRequest request) {
-        return service.create(request);
+    public PedestalResponse create(@Valid @RequestBody PedestalRequest request,
+                                   @Parameter(hidden = true) @RequestHeader(value = "X-User-Id", required = false) String userId,
+                                   @Parameter(hidden = true) @RequestHeader(value = "X-User-Roles", required = false) String roles,
+                                   @Parameter(hidden = true) @RequestHeader(value = "X-User-Port-Id", required = false) String portId) {
+        return service.create(request, CurrentUser.of(userId, roles, portId));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Modifier une borne")
-    public PedestalResponse update(@PathVariable Long id, @Valid @RequestBody PedestalRequest request) {
-        return service.update(id, request);
+    public PedestalResponse update(@PathVariable Long id, @Valid @RequestBody PedestalRequest request,
+                                   @Parameter(hidden = true) @RequestHeader(value = "X-User-Id", required = false) String userId,
+                                   @Parameter(hidden = true) @RequestHeader(value = "X-User-Roles", required = false) String roles,
+                                   @Parameter(hidden = true) @RequestHeader(value = "X-User-Port-Id", required = false) String portId) {
+        return service.update(id, request, CurrentUser.of(userId, roles, portId));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Supprimer une borne")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    @Operation(summary = "Supprimer une borne (refusé si elle a des consommations, RG-08)")
+    public void delete(@PathVariable Long id,
+                       @Parameter(hidden = true) @RequestHeader(value = "X-User-Id", required = false) String userId,
+                       @Parameter(hidden = true) @RequestHeader(value = "X-User-Roles", required = false) String roles,
+                       @Parameter(hidden = true) @RequestHeader(value = "X-User-Port-Id", required = false) String portId) {
+        service.delete(id, CurrentUser.of(userId, roles, portId));
     }
 }
