@@ -5,11 +5,24 @@ spring:
   application:
     name: port-service
   datasource:
-    url: jdbc:postgresql://localhost:5433/portdb
-    username: port
-    password: port123
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/portdb}
+    username: ${DB_USERNAME:port}
+    password: ${DB_PASSWORD:port123}
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: ${SHOW_SQL:true}
+
+pedestal-service:
+  base-url: ${PEDESTAL_SERVICE_URL:http://localhost:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

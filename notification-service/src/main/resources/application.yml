@@ -1,0 +1,57 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5436/notificationdb}
+    username: ${DB_USERNAME:notification}
+    password: ${DB_PASSWORD:notification123}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: ${SHOW_SQL:true}
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # ErrorHandlingDeserializer : un message illisible ne bloque pas la partition, il part en DLT
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: tn.iset.marina.notification_service.event.ConsumptionRecordedEvent
+    producer:
+      # Utilisé uniquement pour republier les messages en échec vers le topic DLT
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+smart-marina:
+  kafka:
+    topics:
+      consumption-recorded: consumption-recorded
+  notifications:
+    thresholds:
+      # Au-delà de ces quantités sur une seule session, une alerte WARNING est créée
+      electricity-kwh: ${THRESHOLD_ELECTRICITY_KWH:50}
+      water-m3: ${THRESHOLD_WATER_M3:2}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

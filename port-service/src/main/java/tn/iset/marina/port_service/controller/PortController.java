@@ -38,6 +38,7 @@ public class PortController {
         return service.update(id, request);
     }
 
+    /** 409 si le port a encore des bornes, 503 si pedestal-service est indisponible. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

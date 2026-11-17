@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -43,10 +44,30 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.CONFLICT, exception.getMessage(), request);
     }
 
-    @ExceptionHandler(PortServiceUnavailableException.class)
-    public ResponseEntity<ErrorResponse> handlePortServiceUnavailable(
-            PortServiceUnavailableException exception, HttpServletRequest request) {
+    @ExceptionHandler(PedestalInUseException.class)
+    public ResponseEntity<ErrorResponse> handlePedestalInUse(
+            PedestalInUseException exception, HttpServletRequest request) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(ForbiddenPortAccessException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenPort(
+            ForbiddenPortAccessException exception, HttpServletRequest request) {
+        return error(HttpStatus.FORBIDDEN, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({PortServiceUnavailableException.class, ConsumptionServiceUnavailableException.class})
+    public ResponseEntity<ErrorResponse> handleServiceUnavailable(
+            RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<ErrorResponse> handleUnknownSortProperty(
+            PropertyReferenceException exception, HttpServletRequest request) {
+        List<ErrorResponse.FieldError> fields = List.of(
+                new ErrorResponse.FieldError("sort", "Champ de tri inconnu : " + exception.getPropertyName()));
+        return error(HttpStatus.BAD_REQUEST, "Un paramètre de la requête est invalide", request, fields);
     }
 
     @ExceptionHandler({ObjectOptimisticLockingFailureException.class,
