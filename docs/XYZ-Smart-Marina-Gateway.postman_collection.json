@@ -1,0 +1,666 @@
+{
+  "info": {
+    "name": "XYZ Smart Marina - via API Gateway",
+    "description": "Toutes les requêtes passent par l'API Gateway (port 8080). Exécuter d'abord un dossier 'Auth' pour obtenir un jeton Keycloak, puis les dossiers dans l'ordre (Runner Postman possible).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "gateway",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "keycloak",
+      "value": "http://localhost:8180"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "portId",
+      "value": "1"
+    },
+    {
+      "key": "pedestalId",
+      "value": ""
+    },
+    {
+      "key": "consumptionId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0 - Auth (Keycloak)",
+      "item": [
+        {
+          "name": "Jeton ADMIN (admin.xyz)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "smart-marina-app"
+                },
+                {
+                  "key": "username",
+                  "value": "admin.xyz"
+                },
+                {
+                  "key": "password",
+                  "value": "admin123"
+                }
+              ]
+            },
+            "url": "{{keycloak}}/realms/smart-marina/protocol/openid-connect/token"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('accessToken', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jeton PORT_MANAGER du port 1 (manager.port1)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "smart-marina-app"
+                },
+                {
+                  "key": "username",
+                  "value": "manager.port1"
+                },
+                {
+                  "key": "password",
+                  "value": "manager123"
+                }
+              ]
+            },
+            "url": "{{keycloak}}/realms/smart-marina/protocol/openid-connect/token"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('accessToken', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jeton BOATER (plaisancier)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "smart-marina-app"
+                },
+                {
+                  "key": "username",
+                  "value": "plaisancier"
+                },
+                {
+                  "key": "password",
+                  "value": "boater123"
+                }
+              ]
+            },
+            "url": "{{keycloak}}/realms/smart-marina/protocol/openid-connect/token"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('accessToken', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 - Ports (ADMIN)",
+      "item": [
+        {
+          "name": "POST Créer port",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gateway}}/api/ports",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Marina Mahdia\",\n  \"city\": \"Mahdia\",\n  \"country\": \"Tunisie\",\n  \"capacity\": 250\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('portId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Lister ports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/ports"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Un port",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/ports/{{portId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 - Bornes",
+      "item": [
+        {
+          "name": "POST Créer une borne",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gateway}}/api/pedestals",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serialNumber\": \"XYZ-PED-{{$randomInt}}\",\n  \"name\": \"Borne Ponton A1\",\n  \"portId\": {{portId}},\n  \"pontoon\": \"A\",\n  \"status\": \"ACTIVE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('pedestalId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Lister (pagination, tri, filtres)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/pedestals?page=0&size=20&sort=id,asc&portId={{portId}}&status=ACTIVE"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Consulter une borne",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/pedestals/{{pedestalId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Tri sur un champ inconnu (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/pedestals?sort=inconnu,asc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 - Consommations (REST + événement Kafka)",
+      "item": [
+        {
+          "name": "POST Enregistrer électricité",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gateway}}/api/consumptions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedestalId\": {{pedestalId}},\n  \"type\": \"ELECTRICITY\",\n  \"quantity\": 12.5,\n  \"boatName\": \"Sea Breeze\",\n  \"startedAt\": \"2026-11-10T08:00:00Z\",\n  \"endedAt\": \"2026-11-10T11:00:00Z\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('consumptionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Eau au-dessus du seuil (alerte WARNING)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gateway}}/api/consumptions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedestalId\": {{pedestalId}},\n  \"type\": \"WATER\",\n  \"quantity\": 3.2,\n  \"boatName\": \"Sea Breeze\",\n  \"startedAt\": \"2026-11-10T08:00:00Z\",\n  \"endedAt\": \"2026-11-10T11:00:00Z\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Période invalide (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gateway}}/api/consumptions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedestalId\": {{pedestalId}},\n  \"type\": \"WATER\",\n  \"quantity\": 1,\n  \"startedAt\": \"2026-11-10T11:00:00Z\",\n  \"endedAt\": \"2026-11-10T08:00:00Z\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Lister par borne",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/consumptions?pedestalId={{pedestalId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Bilan d'une borne",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/consumptions/summary?pedestalId={{pedestalId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 - Notifications (consommateur Kafka)",
+      "item": [
+        {
+          "name": "GET Notifications non lues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/notifications?unreadOnly=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Au moins une notification', () => pm.expect(pm.response.json().totalElements).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 - Règles métier et sécurité",
+      "item": [
+        {
+          "name": "DELETE Borne avec consommations (409, RG-08)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{gateway}}/api/pedestals/{{pedestalId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Sans jeton (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/api/ports",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Port en PORT_MANAGER (403) - prendre d'abord le jeton manager",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gateway}}/api/ports",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Interdit\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Borne sur un autre port en PORT_MANAGER (403, RG-09)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gateway}}/api/pedestals",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serialNumber\": \"XYZ-PED-OTHER\",\n  \"name\": \"Borne\",\n  \"portId\": 999,\n  \"pontoon\": \"B\",\n  \"status\": \"ACTIVE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "En-têtes d'identité falsifiés : ignorés par la Gateway",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              }
+            ],
+            "url": "{{gateway}}/api/notifications"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 - Observabilité (Actuator)",
+      "item": [
+        {
+          "name": "GET Santé de la Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gateway}}/actuator/health",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
