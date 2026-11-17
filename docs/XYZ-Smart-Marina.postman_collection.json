@@ -151,6 +151,59 @@
         }
       ],
       "response": []
+    },
+    {
+      "name": "POST Borne sur le port d'un autre gestionnaire (403, RG-09) - plan B, appel direct",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-User-Id",
+            "value": "manager.port1"
+          },
+          {
+            "key": "X-User-Roles",
+            "value": "PORT_MANAGER"
+          },
+          {
+            "key": "X-User-Port-Id",
+            "value": "1"
+          }
+        ],
+        "description": "Plan B (SECURITY_ENABLED=false) : la Gateway supprime les en-têtes X-User-*, on appelle donc pedestal-service directement en simulant ce que la Gateway transmettrait pour manager.port1. Réponse attendue : 403.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serialNumber\": \"XYZ-PED-OTHER\",\n  \"name\": \"Borne\",\n  \"portId\": 2,\n  \"pontoon\": \"B\",\n  \"status\": \"ACTIVE\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/pedestals",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8082",
+          "path": [
+            "api",
+            "pedestals"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "response": []
     }
   ]
 }

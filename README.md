@@ -97,6 +97,8 @@ curl -X POST http://localhost:8180/realms/smart-marina/protocol/openid-connect/t
 
 La documentation Swagger UI de chaque service est disponible sur `http://localhost:<port>/swagger-ui.html`. Les collections Postman se trouvent dans [docs/](docs/). La collection [XYZ-Smart-Marina-Gateway](docs/XYZ-Smart-Marina-Gateway.postman_collection.json) déroule le scénario complet à travers la Gateway.
 
+Le scénario de démonstration de 5 minutes (Docker + Keycloak, ou plan B local) se trouve dans [docs/DEMO.md](docs/DEMO.md). Les réponses aux questions de soutenance sont dans [docs/SOUTENANCE.md](docs/SOUTENANCE.md).
+
 ### port-service - `/api/ports`
 
 `GET` (liste), `GET /{id}`, `POST`, `PUT /{id}`, `DELETE /{id}`. Corps : `{"name": "Marina Mahdia", "city": "Mahdia", "country": "Tunisie", "capacity": 250}`.
