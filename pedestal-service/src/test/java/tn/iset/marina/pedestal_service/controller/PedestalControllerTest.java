@@ -12,10 +12,26 @@ import tn.iset.marina.pedestal_service.exception.DuplicateSerialNumberException;
 import tn.iset.marina.pedestal_service.exception.PedestalNotFoundException;
 import tn.iset.marina.pedestal_service.service.PedestalService;
 
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import tn.iset.marina.pedestal_service.dto.PedestalPageResponse;
+import tn.iset.marina.pedestal_service.exception.ForbiddenPortAccessException;
+import tn.iset.marina.pedestal_service.exception.PedestalInUseException;
+import tn.iset.marina.pedestal_service.security.CurrentUser;
+
 import java.time.Instant;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -33,7 +49,7 @@ class PedestalControllerTest {
 
     @Test
     void createReturnsCreated() throws Exception {
-        when(service.create(any())).thenReturn(response(1L));
+        when(service.create(any(), any())).thenReturn(response(1L));
 
         mockMvc.perform(post("/api/pedestals")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,13 +97,62 @@ class PedestalControllerTest {
 
     @Test
     void updateReturnsConflictForDuplicateSerialNumber() throws Exception {
-        when(service.update(anyLong(), any())).thenThrow(new DuplicateSerialNumberException("XYZ-PED-002"));
+        when(service.update(anyLong(), any(), any())).thenThrow(new DuplicateSerialNumberException("XYZ-PED-002"));
 
         mockMvc.perform(put("/api/pedestals/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBody()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    void listAcceptsSortParameterFromDocumentation() throws Exception {
+        when(service.findAll(any(), any(), any())).thenReturn(new PedestalPageResponse(List.of(), 0, 20, 0, 0));
+
+        mockMvc.perform(get("/api/pedestals?page=0&size=20&sort=name,desc&portId=3&status=ACTIVE"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(service).findAll(pageable.capture(), eq(3L), eq(PedestalStatus.ACTIVE));
+        assertEquals(Sort.Direction.DESC, pageable.getValue().getSort().getOrderFor("name").getDirection());
+    }
+
+    @Test
+    void createPassesGatewayIdentityToService() throws Exception {
+        when(service.create(any(), any())).thenReturn(response(1L));
+
+        mockMvc.perform(post("/api/pedestals")
+                        .header("X-User-Id", "u1")
+                        .header("X-User-Roles", "PORT_MANAGER")
+                        .header("X-User-Port-Id", "3")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBody()))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<CurrentUser> user = ArgumentCaptor.forClass(CurrentUser.class);
+        verify(service).create(any(), user.capture());
+        assertEquals(3L, user.getValue().portId());
+        assertEquals(Set.of("PORT_MANAGER"), user.getValue().roles());
+    }
+
+    @Test
+    void createReturnsForbiddenForAnotherPort() throws Exception {
+        when(service.create(any(), any())).thenThrow(new ForbiddenPortAccessException(3L));
+
+        mockMvc.perform(post("/api/pedestals")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBody()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deleteReturnsConflictWhenPedestalHasConsumptions() throws Exception {
+        doThrow(new PedestalInUseException(1L, 2)).when(service).delete(anyLong(), any());
+
+        mockMvc.perform(delete("/api/pedestals/1"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Suppression impossible : la borne 1 possède 2 consommation(s)"));
     }
 
     private String validBody() {

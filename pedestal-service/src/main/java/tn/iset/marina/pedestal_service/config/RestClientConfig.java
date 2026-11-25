@@ -13,6 +13,15 @@ public class RestClientConfig {
 
     @Bean
     RestClient portRestClient(@Value("${port-service.base-url}") String baseUrl) {
+        return restClient(baseUrl);
+    }
+
+    @Bean
+    RestClient consumptionRestClient(@Value("${consumption-service.base-url}") String baseUrl) {
+        return restClient(baseUrl);
+    }
+
+    private RestClient restClient(String baseUrl) {
         var requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(2));
         requestFactory.setReadTimeout(Duration.ofSeconds(3));
